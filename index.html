@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Basic File</title>
+	<link href="css/bootstrap.min.css" rel="stylesheet">
+
+	<link rel="stylesheet" type="text/css" href="animate.scss">
+
+	<script src="https://code.jquery.com/jquery.js"></script>
+</head>
+<body>
+	
+	<div id="wrapper">
+            <div id="fileContainer" class="file_wrapper">
+                <div id="info">
+                    Press Play | Listen
+                </div>
+                
+                <label for="uploadedFile">Drag&drop or select a file to play:</label>
+                
+                <input type="file" id="uploadedFile"></input>
+            </div>
+            
+            <div id="visualizer_wrapper">
+                <canvas id='canvas' ></canvas>
+            </div>
+            
+        </div>
+	<!-- Note the script tag here as well as the "text/javascript" -->
+	<script src="player.js">
+
+	</script>
+</body>
+</html>
