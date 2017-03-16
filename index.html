@@ -17,15 +17,23 @@
                     Press Play | Listen
                 </div>
                 
-                <label for="uploadedFile">Drag&drop or select a file to play:</label>
+                <label for="uploadedFile"> Drag&drop or select a file to play: </label>
                 
                 <input type="file" id="uploadedFile"></input>
+
+            </div>
+
+            <div id="playButton">
+				<img src="images/play.png" id="playImage" alt="play button" height="42" width="42">
+				<audio loop="loop">
+					<source src"Stairway.mp3" type="audio/mp3"/>
+				</audio>
             </div>
             
-            <div id="visualizer_wrapper">
+            <div id="visualizer_wrapper">               
                 <canvas id='canvas' ></canvas>
             </div>
-            
+
         </div>
 	<!-- Note the script tag here as well as the "text/javascript" -->
 	<script src="player.js">

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="description" content="HTML5 Audio Spectrum Visualizer">
+        <title>HTML5 Audio API showcase | Audio visualizer</title>
+        <style type="text/css">
+            html, body {
+                margin: 0;
+                font-family: arial, "Microsoft YaHei";
+                background-color: #272822;
+                color: #FEFEFE;
+            }
+            #fileContainer{
+                transition:all 0.5s ease;
+                padding-left: 25px;
+                margin-bottom: 0px;
+                padding-bottom: 0px;
+                width: 100%;
+
+            }
+            #fileContainer:hover{
+                opacity: 1!important;
+            }
+            #visualizer_wrapper{
+                text-align: center;
+                width: 100%;
+                padding-bottom: 0px;
+                margin-bottom: 0px;
+            }
+
+            #canvas {
+                width: 100%;
+                height: 100%;
+
+
+            }
+            footer{
+                position: fixed;
+                bottom: 2px;
+                color:#aaa;
+                padding-bottom: 0px;
+            }
+        </style>
+    </head>
+    <body>
+    <!--width="800" -->
+        <div id="wrapper">
+            <div id="fileContainer" class="file_wrapper">
+                <div id="info">
+                    HTML5 Audio API showcase | An Audio Viusalizer
+                </div>
+                <label for="uploadedFile">Drag&drop or select a file to play:</label>
+                <input type="file" id="uploadedFile"></input>
+            </div>
+            <div id="visualizer_wrapper">
+                <canvas id='canvas' ></canvas>
+            </div>
+        </div>
+        <!--<footer>
+            <small>Star me on <a href="https://github.com/Wayou/HTML5_Audio_Visualizer" target="_blank">GitHub</a></small>
+        </footer>-->
+        <script type="text/javascript">
+
+        // initiate visualizer function at onload
+            window.onload = function () {
+                new Visualizer().initialize();
+            };
+
+            // set constructor function for visualizer
+            var Visualizer = function() {
+
+                this.file = null,
+                this.fileName = null, //the current file name
+                this.audioContext = null,
+                this.source = null, //the audio source
+                this.info = document.getElementById('info').innerHTML, //this used to upgrade the UI information
+                this.infoUpdateId = null, //to sotore the setTimeout ID and clear the interval
+                this.animationId = null,
+                this.status = 0, //flag for sound is playing 1 or stopped 0
+                this.forceStop = false,
+                this.allCapsReachBottom = false
+            };
+
+            //Make sure visualizer works in all browsers
+
+            Visualizer.prototype = {
+
+                initialize: function() {
+                    this.checkBrowser();
+                    this.fileUpload();
+
+                },
+
+                checkBrowser: function(){
+
+                       window.AudioContext = window.AudioContext || window.webkitAudioContext || window.mozAudioContext || window.msAudioContext;
+                    window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame;
+                    window.cancelAnimationFrame = window.cancelAnimationFrame || window.webkitCancelAnimationFrame || window.mozCancelAnimationFrame || window.msCancelAnimationFrame;
+                    try {
+                        this.audioContext = new AudioContext();
+                    } catch (e) {                                           // what is catch???
+                        this.updateInfo('!Your browser does not support AudioContext', false);
+                        console.log(e);
+                    }
+                },
+
+                fileUpload: function() {
+                    var that = this,
+                    audioInput = document.getElementById("uploadedFile");
+
+                    audioInput.onchange = function() {
+
+                        if (that.audioContext===null) {
+                            return;
+                        };
+
+                        if (audioInput.files.length !== 0 ) {
+
+                            that.file = audioInput.files[0]; // assigns uploaded file to Constructor file variable as array slot 0
+
+                            that.fileName = that.file.name;
+
+                            if (that.status === 1){
+
+                                that.forceStop = true;
+                            };
+
+                            document.getElementById("fileContainer").style.opacity = 1;
+
+                            that.updateInfo("Uploading", true);
+
+                            that.start();
+                        };
+                    };
+
+// omit drag and drop methods here
+            //listen the drag & drop
+                //     dropContainer.addEventListener("dragenter", function() {
+                //         document.getElementById('fileContainer').style.opacity = 1;
+                //         that.updateInfo('Drop it on the page', true);
+                //     }, false);
+                //     dropContainer.addEventListener("dragover", function(e) {
+                //         e.stopPropagation();
+                //         e.preventDefault();
+                //         //set the drop mode
+                //         e.dataTransfer.dropEffect = 'copy';
+                //     }, false);
+                //     dropContainer.addEventListener("dragleave", function() {
+                //         document.getElementById('fileContainer').style.opacity = 0.2;
+                //         that.updateInfo(that.info, false);
+                //     }, false);
+                //     dropContainer.addEventListener("drop", function(e) {
+                //         e.stopPropagation();
+                //         e.preventDefault();
+                //         if (that.audioContext===null) {return;};
+                //         document.getElementById('fileContainer').style.opacity = 1;
+                //         that.updateInfo('Uploading', true);
+                //         //get the dropped file
+                //         that.file = e.dataTransfer.files[0];
+                //         if (that.status === 1) {
+                //             document.getElementById('fileContainer').style.opacity = 1;
+                //             that.forceStop = true;
+                //         };
+                //         that.fileName = that.file.name;
+                //         //once the file is ready,start the visualizer
+                //         that.start();
+                //     }, false);
+                 },
+
+
+                 // end of fileUpload function
+
+                //start function here
+                start: function() {
+
+                    var that = this,
+                        file = this.file,
+                        fr = new FileReader();
+
+                    fr.onload = function(error) {
+                        var fileResult = error.target.result;
+
+                        var audioContext = that.audioContext;
+
+                        if (audioContext === null) {
+
+                            return; //if no value in audioContext stop code here
+                        };
+
+                        that.updateInfo("Reading Your Audio", true);
+
+                        audioContext.decodeAudioData(fileResult, function(buffer){
+
+                            that.updateInfo("Read Audio Succesful", true);
+
+                            that.visualize(audioContext, buffer);
+                            }, function(error) {
+
+                                that.updateInfo("FAILED to read Audio", false);
+                                console.log(error);
+                            });
+                        
+                    };
+
+                    fr.onerror = function(error) {
+
+                        that.updateInfo("Failed to read the audio", false);
+                        console.log(error);
+                    };
+
+                    this.updateInfo("starting to analyze the audio", true);
+                    fr.readAsArrayBuffer(file);
+
+                },
+
+                visualize: function(audioContext, buffer) {
+
+                    var audioBufferSourceNode = audioContext.createBufferSource(),
+                    
+                    analyser = audioContext.createAnalyser(),
+
+                    that = this;
+
+                    audioBufferSourceNode.connect(analyser); // connect analyser to buffer Node
+
+                    analyser.connect(audioContext.destination); //send analyser data to speakers
+
+                    audioBufferSourceNode.buffer = buffer; //assirng the audio buffer to the variable
+
+                    // play and pause for older browsers
+                    if (!audioBufferSourceNode.start) {
+                        audioBufferSourceNode.start = audioBufferSourceNode.noteOn
+
+                        audioBufferSourceNode.stop = audioBufferSourceNode.noteOff
+                    };
+
+                    if (this.animationId !== null) {
+                        cancelAnimationFrame(this.animationId);
+                    }
+
+                    if (this.source !== null) {
+                        this.source.stop(0);
+                    }
+
+                    //errors checked above. setting start function to source node bellow and updating status
+
+                    audioBufferSourceNode.start(0);
+                    this.status = 1;
+                    this.source = audioBufferSourceNode;
+
+                    audioBufferSourceNode.onended = function() {
+                        that.audioEnd(that);
+                    };
+
+                    this.updateInfo("Playing" + this.fileName, false); // set html to file playing
+
+                    this.info = "Playing " + this.fileName;
+
+                    document.getElementById("fileContainer").style.opacity = 0.2;
+
+                    this.drawSpectrum(analyser); //call drawSpectrum using data from analyser
+            
+            // end of visualize function
+                },
+
+                //canvas introduced here
+
+                drawSpectrum: function(analyser) {
+
+                    var that = this,
+                        canvas = document.getElementById("canvas"),//assign html id to canvas location
+
+                        cwidth = canvas.width, // maybe window.width instead?
+                        cheight = canvas.height - 2, // window.height instead?
+
+                        meterWidth = 11,
+                        gap = 2,
+                        capHeight = 2,
+                        capStyle = "#fff",
+                        meterNum = 1000 / (10 + 2), //???
+                        capYPositionArray = [];
+
+                        ctx = canvas.getContext("2d"),
+
+                        gradient = ctx.createLinearGradient(0, 0, 0, 300); //clear bar colors
+
+                        gradient.addColorStop(1, "#191256");
+                        gradient.addColorStop(0.5, '#b0039c');
+                        gradient.addColorStop(0, '#f00');
+
+                        var drawMeter = function() {
+
+                            var array = new Uint8Array (analyser.frequencyBinCount
+                                );
+                            analyser.getByteFrequencyData(array);
+
+                            if(that.status === 0) {
+
+                                for (var i = array.length -1; i>=0; i--) {
+                                    array[i] = 0;
+                                };
+
+                                allCapsReachBottom = true;
+                                for (var i = capYPositionArray - 1; i >= 0; i--) {
+                                    allCapsReachBottom = allCapsReachBottom && (capYPositionArray[i] === 0);
+                                };
+
+                                if (allCapsReachBottom) {
+                                    cancelAnimationFrame(that.animationId); // cancel animation when sound is at value of 0
+                                    return; //stop code here if so
+                                };
+                            };
+
+                            var step = Math.round(array.length / meterNum); 
+
+                            ctx.clearRect(0, 0, cwidth, cheight); // clear bars
+
+                            for (var i = 0; i < meterNum; i++) {
+                                var value = array[i * step]; // for each bar, set frequency value to step var
+
+                                if (capYPositionArray.length < Math.round(meterNum)) {
+                                    capYPositionArray.push(value);
+                                }; // set caps to value of last bar value.
+
+                                ctx.fillStyle = capStyle;
+
+                                if (value < capYPositionArray[i]) {
+                                    ctx.fillRect(i * 12, cheight - (--capYPositionArray[i]), meterWidth, capHeight);
+
+                                } else {
+                                    ctx.fillRect(i * 12, cheight - value, meterWidth, capHeight); 
+
+                                    capYPositionArray[i] = value;
+                                };
+
+                                ctx.fillStyle = gradient;
+
+                                ctx.fillRect(i * 12, cheight - value + capHeight, meterWidth,cheight);
+                            }
+
+                            that.animationId = requestAnimationFrame(drawMeter);
+                        }
+
+                        this.animationId = requestAnimationFrame(drawMeter);
+
+
+                },
+
+                audioEnd: function(instance) {
+
+                    if (this.forceStop) {
+                        this.forceStop = false;
+                        this.status = 1;
+                        return;
+                    };
+
+                    this.status = 0;
+
+                    var text = "I hope this visualizer works";
+                    document.getElementById("fileContainer").style.opacity = 1;
+
+                    document.getElementById("info").innerHTML = text;
+                    instance.info = text;
+
+                    document.getElementById("uploadedFile").value = " ";
+                },
+
+                updateInfo: function(text, processing) {
+
+                    var infoBar = document.getElementById("info"),
+                        dots = "....",
+                        i = 0,
+                        that = this;
+                    infoBar.innerHTML = text + dots.substring(0, i++);
+                    if (this.infoUpdateId !== null)
+                    {
+                        clearTimeout(this.infoUpdateId);
+                    };
+
+                    if (processing) {
+
+                        var animateDot = function() {
+                            if (i > 3) {
+                                i = 0
+                            };
+
+                            infoBar.innerHTML = text + dots.substring(0, i++);
+                            that.infoUpdateId = setTimeout(animateDot, 250);
+
+                        }
+
+                        this.infoUpdateId = setTimeout(animateDot, 250);
+                    };
+                }
+
+
+
+
+            }
+
+            //sources:
+            //http://www.w3schools.com/html/html5_audio.asp
+            //https://developer.mozilla.org/en-US/docs/Web/API/CanvasPattern
+            //https://www.html5rocks.com/en/tutorials/webaudio/intro/
+            //https://www.w3.org/TR/webaudio/
+            //http://www.michaelbromley.co.uk/blog/42/audio-visualization-with-web-audio-canvas-and-the-soundcloud-api
+            //https://github.com/cbrandolino/local-audio-visualizer
+
+            
+
+            </script>
+
+        </body>
+    </html>
