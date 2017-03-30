@@ -1,11 +1,10 @@
-## Synopsis
+# AudioPlayer
+Audio Player and Visualizer using javascript and html5 canvas.
 
-AudioPlayer is and HTML5 Canvas project analyzing an MP3 file frequency and drawing responsive and colorful bars on the browser.
 
 ## Motivation
 
-This is my first project in HTML5 Canvas and a way to learn a common tool seen in old itunes or Microsoft Media Player.
-
+Old digital music players used to have audio visualiser's that filled the screen during a playlist and provided a dynamic visual aspect to the music. A web based version was my goal while learning html5 canvas.
 
 ## License
 
